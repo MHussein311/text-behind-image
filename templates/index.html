@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Editor with Background Removal and Text Editing</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #f4f6f9;
+    color: #333;
+    min-height: 100vh;
+    margin: 0;
+    box-sizing: border-box;
+}
+h1 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 2rem;
+}
+#upload-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+#upload-form:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+}
+#file-input {
+    display: none;
+}
+#file-input-label {
+    padding: 12px 20px;
+    border-radius: 8px;
+    background-color: #3498db;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+#file-input-label:hover {
+    background-color: #2980b9;
+}
+#canvas-container {
+    margin-top: 30px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+#canvas-container:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+}
+#text-controls {
+    margin-top: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+}
+button, select, input[type="color"], input[type="number"] {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 8px;
+    background-color: #3498db;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+button:hover, select:hover, input[type="color"]:hover, input[type="number"]:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+}
+select {
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background: white;
+    color: #333;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 2px solid #3498db;
+    background-image: url('data:image/svg+xml;base64,...'); /* Add a custom arrow for dropdown */
+    background-position: right 15px center;
+    background-repeat: no-repeat;
+    background-size: 12px;
+}
+input[type="number"], input[type="color"] {
+    width: 80px;
+    padding: 12px;
+}
+button {
+    min-width: 120px;
+}
+button:active {
+    transform: translateY(2px);
+    box-shadow: none;
+}
+input[type="color"] {
+    width: 42px; /* Adjust the width to match rounded rectangle */
+    height: 42px; /* Keep the height */
+    border-radius: 8px; /* Make it rounded rectangle */
+    border: 2px solid #3498db; /* Add border color to match theme */
+    padding: 0;
+    cursor: pointer;
+    appearance: none; /* Remove default appearance */
+    background: transparent; /* Make background transparent */
+}
+input[type="color"]::-webkit-color-swatch {
+    border-radius: 8px; /* Round the swatch */
+}
+input[type="file"] {
+    display: none;
+}
+@media (max-width: 768px) {
+    #text-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+    button, select, input[type="color"], input[type="number"] {
+        width: 100%;
+    }
+}
+    </style>
+</head>
+<body>
+    <h1>Image Editor with Background Removal and Text Editing</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+        <label id="file-input-label" for="file-input">Upload Image</label>
+        <input type="file" name="file" accept=".png,.jpg,.jpeg" id="file-input">
+    </form>
+    
+    <div id="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+    <div id="text-controls">
+        <button id="add-text">Add Text</button>
+<select id="font-family">
+    <option value="Arial" style="font-family: Arial;">Arial</option>
+    <option value="Helvetica" style="font-family: Helvetica;">Helvetica</option>
+    <option value="Times New Roman" style="font-family: 'Times New Roman';">Times New Roman</option>
+    <option value="Courier" style="font-family: Courier;">Courier</option>
+    <option value="Verdana" style="font-family: Verdana;">Verdana</option>
+    <option value="Georgia" style="font-family: Georgia;">Georgia</option>
+    <option value="Palatino" style="font-family: Palatino;">Palatino</option>
+    <option value="Garamond" style="font-family: Garamond;">Garamond</option>
+    <option value="Bookman" style="font-family: Bookman;">Bookman</option>
+    <option value="Comic Sans MS" style="font-family: 'Comic Sans MS';">Comic Sans MS</option>
+    <option value="Trebuchet MS" style="font-family: 'Trebuchet MS';">Trebuchet MS</option>
+    <option value="Arial Black" style="font-family: 'Arial Black';">Arial Black</option>
+    <option value="Impact" style="font-family: Impact;">Impact</option>
+</select>
+        
+        <input type="color" id="font-color" value="#000000">
+        <input type="number" id="font-size" min="1" max="100" value="20">
+        <button id="bold-text">Bold</button>
+        <button id="italic-text">Italic</button>
+        <button id="duplicate-text">Duplicate Textbox</button>
+        <button id="delete-text">Delete Textbox</button>
+        <button id="download-image">Download Image</button>
+    </div>
+    <script>
+        const canvas = new fabric.Canvas('canvas');
+        let backgroundImage, foregroundImage;
+        let copiedObject = null;
+        document.getElementById('file-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch('/', {
+            method: 'POST',
+            body: formData
+        });
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        // Hide the upload form after the image is uploaded
+        document.getElementById('upload-form').style.display = 'none';
+        // Load original image as background
+        fabric.Image.fromURL(URL.createObjectURL(file), (img) => {
+            canvas.setDimensions({width: img.width, height: img.height});
+            backgroundImage = img;
+            canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas));
+            // Load processed image as foreground
+            fabric.Image.fromURL(url, (img) => {
+                foregroundImage = img;
+                foregroundImage.selectable = false;
+                foregroundImage.evented = false;
+                canvas.add(foregroundImage);
+                canvas.bringToFront(foregroundImage);
+                canvas.renderAll();
+            });
+        });
+    }
+});
+        document.getElementById('add-text').addEventListener('click', () => {
+            addTextbox();
+        });
+        function addTextbox() {
+            const text = new fabric.IText('Edit me', {
+                left: 50,
+                top: 50,
+                fontFamily: 'Arial',
+                fill: '#000000',
+                fontSize: 20
+            });
+            canvas.add(text);
+            if (foregroundImage) {
+                canvas.moveTo(foregroundImage, canvas.getObjects().length - 1);
+            }
+            canvas.setActiveObject(text);
+            canvas.renderAll();
+        }
+        canvas.on('selection:created', updateTextControls);
+        canvas.on('selection:updated', updateTextControls);
+        function updateTextControls(e) {
+            const selectedObject = e.selected[0];
+            if (selectedObject && selectedObject.type === 'i-text') {
+                document.getElementById('font-family').value = selectedObject.fontFamily;
+                document.getElementById('font-color').value = selectedObject.fill;
+                document.getElementById('font-size').value = selectedObject.fontSize;
+            }
+        }
+        document.getElementById('font-family').addEventListener('change', (e) => {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'i-text') {
+                activeObject.set('fontFamily', e.target.value);
+                canvas.renderAll();
+            }
+        });
+        document.getElementById('font-color').addEventListener('input', (e) => {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'i-text') {
+                activeObject.set('fill', e.target.value);
+                canvas.renderAll();
+            }
+        });
+        document.getElementById('download-image').addEventListener('click', () => {
+    const dataURL = canvas.toDataURL({
+        format: 'png',
+        multiplier: 1 // Adjust multiplier for higher resolution
+    });
+    // Create a link element
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = 'canvas-image.png'; // Name of the downloaded file
+    
+    // Programmatically click the link to trigger the download
+    link.click();
+});
+        document.getElementById('font-size').addEventListener('input', (e) => {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'i-text') {
+                activeObject.set('fontSize', parseInt(e.target.value, 10));
+                canvas.renderAll();
+            }
+        });
+        document.getElementById('bold-text').addEventListener('click', () => {
+            toggleBold();
+        });
+        document.getElementById('italic-text').addEventListener('click', () => {
+            toggleItalic();
+        });
+        function toggleBold() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'i-text') {
+                activeObject.set('fontWeight', activeObject.fontWeight === 'bold' ? 'normal' : 'bold');
+                canvas.renderAll();
+            }
+        }
+        function toggleItalic() {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'i-text') {
+                activeObject.set('fontStyle', activeObject.fontStyle === 'italic' ? 'normal' : 'italic');
+                canvas.renderAll();
+            }
+        }
+        document.getElementById('duplicate-text').addEventListener('click', () => {
+    const activeObject = canvas.getActiveObject();
+    if (activeObject && activeObject.type === 'i-text') {
+        activeObject.clone((clonedObject) => {
+            clonedObject.set({
+                left: activeObject.left + 10, // Offset position to avoid overlap
+                top: activeObject.top + 10,
+            });
+            canvas.add(clonedObject);
+            canvas.sendToBack(clonedObject); // Ensure it's behind the foreground
+            canvas.setActiveObject(clonedObject);
+            canvas.renderAll();
+        });
+    }
+});
+        // New functionality: Delete textbox
+        document.getElementById('delete-text').addEventListener('click', () => {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'i-text') {
+                canvas.remove(activeObject);
+                canvas.renderAll();
+            }
+        });
+        canvas.on('text:editing:entered', () => {
+            canvas.off('key:down');
+        });
+        canvas.on('text:editing:exited', () => {
+            canvas.on('key:down', handleKeyDown);
+        });
+        function handleKeyDown(e) {
+            const activeObject = canvas.getActiveObject();
+            if (activeObject && activeObject.type === 'i-text') {
+                if (e.ctrlKey && e.key === 'b') {
+                    toggleBold();
+                    e.preventDefault();
+                } else if (e.ctrlKey && e.key === 'i') {
+                    toggleItalic();
+                    e.preventDefault();
+                } else if (e.ctrlKey && e.key === 'c') {
+                    copiedObject = activeObject.toObject();
+                    e.preventDefault();
+                } else if (e.ctrlKey && e.key === 'v' && copiedObject) {
+                    fabric.util.enlivenObjects([copiedObject], function(objects) {
+                        objects[0].set({
+                            left: activeObject.left + 10,
+                            top: activeObject.top + 10
+                        });
+                        canvas.add(objects[0]);
+                        canvas.setActiveObject(objects[0]);
+                        canvas.renderAll();
+                    });
+                    e.preventDefault();
+                } else if ((e.key === 'Backspace' || e.key === 'Delete') && !activeObject.isEditing) {
+                    canvas.remove(activeObject);
+                    canvas.renderAll();
+                }
+            }
+        }
+        canvas.on('key:down', handleKeyDown);
+    </script>
+</body>
+</html>
