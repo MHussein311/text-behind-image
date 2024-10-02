@@ -1,16 +1,10 @@
 {
     "version": 2,
     "functions": {
-        "app.py": {
-          "includeFiles": ["app.py", "requirements.txt", "templates/**"]
-        }
-      },
-    "builds": [
-      {
-        "src": "app.py",
-        "use": "@vercel/python"
+      "app.py": {
+        "includeFiles": ["app.py", "requirements.txt", "templates/**", "uploads/**"]
       }
-    ],
+    },
     "routes": [
       {
         "src": "/(.*)",
