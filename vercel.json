@@ -1,5 +1,10 @@
 {
     "version": 2,
+    "functions": {
+        "app.py": {
+          "includeFiles": ["app.py", "requirements.txt", "templates/**"]
+        }
+      },
     "builds": [
       {
         "src": "app.py",
